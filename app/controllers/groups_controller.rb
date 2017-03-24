@@ -41,12 +41,33 @@ class GroupsController < ApplicationController
     redirect_to groups_path, alert: "Group deleted"
   end
 
-  private
+  def join
+    @group = Group.find(params[:id])
 
-  def group_params
-    params.require(:group).permit(:title, :description)
+      if !current_user.is_member_of?(@group)
+        current_user.join!(@group)
+        flash[:notice] = "加入本谈论版成功"
+      else
+        flash[:notice] = "你已经是成员了"
+      end
+
+      redirect_to group_path(@group)
   end
-end
+
+  def quit
+    @group = Group.find(params[:id])
+
+      if current_user.is_member_of?(@group)
+        current_user.quit!(@group)
+        flash[:alert] = "已经退出本讨论"
+      else
+        flash[:warning] = "你不是本讨论版成员，怎么退出？？"
+      end
+
+      redirect_to group_path(@group)
+  end
+
+  private
 
   def find_group_and_check_permission
     @group = Group.find(params[:id])
@@ -55,3 +76,9 @@ end
       redirect_to root_path, alert: "You have no permission."
     end
   end
+
+  def group_params
+    params.require(:group).permit(:title, :description)
+  end
+
+end
